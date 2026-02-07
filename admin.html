@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Risultato Votazione</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <style>
+    body { font-family: Arial; text-align: center; padding: 20px; }
+    button { margin-top: 20px; padding: 10px 20px; font-size: 16px; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+<h1>📊 Risultato finale</h1>
+
+<p id="result">Caricamento...</p>
+
+<!-- Bottone Reset -->
+<button id="resetBtn">🔄 Reset voti</button>
+
+<script>
+const firebaseConfig = {
+    apiKey: "AIzaSyDg2FCqjIz_SWv58Khm9pk4ofaulGZ9Ocg",
+    authDomain: "progetto-diritto.firebaseapp.com",
+    databaseURL: "https://progetto-diritto-default-rtdb.firebaseio.com",
+    projectId: "progetto-diritto",
+    storageBucket: "progetto-diritto.firebasestorage.app",
+    messagingSenderId: "517846338253",
+    appId: "1:517846338253:web:a6c939fcff939f4ea03784",
+    measurementId: "G-MX352F64L1"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  // Funzione per aggiornare la visualizzazione
+  function aggiornaRisultato(data) {
+    const senato = data.senato || 0;
+    const camera = data.camera || 0;
+
+    let winner = "Pareggio";
+    if (senato > camera) winner = "🏛️ SENATO VINCE";
+    if (camera > senato) winner = "🏢 CAMERA VINCE";
+
+    document.getElementById("result").innerHTML = `
+      Senato: ${senato} voti<br>
+      Camera: ${camera} voti<br><br>
+      <strong>${winner}</strong>
+    `;
+  }
+
+  // Listener Firebase
+  db.ref("voti").on("value", snapshot => {
+    const data = snapshot.val() || { senato: 0, camera: 0 };
+    aggiornaRisultato(data);
+  });
+
+  // Bottone reset
+  document.getElementById("resetBtn").addEventListener("click", () => {
+    if (confirm("Sei sicuro di voler resettare tutti i voti?")) {
+      db.ref("voti").set({ senato: 0, camera: 0 })
+        .then(() => {
+          aggiornaRisultato({ senato: 0, camera: 0 });
+          alert("Voti resettati con successo!");
+        })
+        .catch(err => alert("Errore nel reset: " + err));
+    }
+  });
+</script>
+
+</body>
+</html>

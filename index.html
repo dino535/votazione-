@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Votazione Parlamento</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <style>
+    body { font-family: Arial; text-align: center; padding: 20px; }
+    button { font-size: 20px; padding: 15px 25px; margin: 10px; }
+  </style>
+</head>
+<body>
+
+<h1>🗳️ Votazione</h1>
+<p>Scegli una sola opzione</p>
+
+<div id="voting">
+  <button onclick="vote('senato')">Senato</button>
+  <button onclick="vote('camera')">Camera</button>
+</div>
+
+<p id="msg"></p>
+
+<script>
+const firebaseConfig = {
+    apiKey: "AIzaSyDg2FCqjIz_SWv58Khm9pk4ofaulGZ9Ocg",
+    authDomain: "progetto-diritto.firebaseapp.com",
+    databaseURL: "https://progetto-diritto-default-rtdb.firebaseio.com",
+    projectId: "progetto-diritto",
+    storageBucket: "progetto-diritto.firebasestorage.app",
+    messagingSenderId: "517846338253",
+    appId: "1:517846338253:web:a6c939fcff939f4ea03784",
+    measurementId: "G-MX352F64L1"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  if (localStorage.getItem("voted")) {
+    document.getElementById("voting").style.display = "none";
+    document.getElementById("msg").innerText = "✅ Hai già votato";
+  }
+
+  function vote(choice) {
+    if (localStorage.getItem("voted")) return;
+
+    db.ref("voti/" + choice).transaction(val => (val || 0) + 1);
+    localStorage.setItem("voted", "true");
+
+    document.getElementById("voting").style.display = "none";
+    document.getElementById("msg").innerText = "✅ Voto registrato";
+  }
+</script>
+
+</body>
+</html>
