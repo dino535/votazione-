@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <title>Risultato Votazione</title>
+  <title>Admin Votazioni</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -10,19 +10,27 @@
 
   <style>
     body { font-family: Arial; text-align: center; padding: 20px; }
-    button { margin-top: 20px; padding: 10px 20px; font-size: 16px; cursor: pointer; }
+    input, button { padding: 8px; font-size: 16px; margin: 5px; }
   </style>
 </head>
 <body>
 
-<h1>📊 Risultato finale</h1>
+<h1>🔐 Admin</h1>
 
-<p id="result">Caricamento...</p>
+<div id="login">
+  <input type="password" id="password" placeholder="Password admin">
+  <button onclick="login()">Entra</button>
+</div>
 
-<!-- Bottone Reset -->
-<button id="resetBtn">🔄 Reset voti</button>
+<div id="panel" style="display:none;">
+  <h2>📊 Risultati</h2>
+  <p id="results">Caricamento...</p>
+  <button onclick="resetVotes()">🗑 Reset voti</button>
+</div>
 
 <script>
+  const ADMIN_PASSWORD = "1234"; // 🔴 CAMBIALA
+
 const firebaseConfig = {
     apiKey: "AIzaSyDg2FCqjIz_SWv58Khm9pk4ofaulGZ9Ocg",
     authDomain: "progetto-diritto.firebaseapp.com",
@@ -37,39 +45,42 @@ const firebaseConfig = {
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
 
-  // Funzione per aggiornare la visualizzazione
-  function aggiornaRisultato(data) {
-    const senato = data.senato || 0;
-    const camera = data.camera || 0;
-
-    let winner = "Pareggio";
-    if (senato > camera) winner = "🏛️ SENATO VINCE";
-    if (camera > senato) winner = "🏢 CAMERA VINCE";
-
-    document.getElementById("result").innerHTML = `
-      Senato: ${senato} voti<br>
-      Camera: ${camera} voti<br><br>
-      <strong>${winner}</strong>
-    `;
+  function login() {
+    const pw = document.getElementById("password").value;
+    if (pw === ADMIN_PASSWORD) {
+      document.getElementById("login").style.display = "none";
+      document.getElementById("panel").style.display = "block";
+      loadResults();
+    } else {
+      alert("Password sbagliata");
+    }
   }
 
-  // Listener Firebase
-  db.ref("voti").on("value", snapshot => {
-    const data = snapshot.val() || { senato: 0, camera: 0 };
-    aggiornaRisultato(data);
-  });
+  function loadResults() {
+    db.ref("votes").on("value", snap => {
+      const votes = snap.val();
+      if (!votes) {
+        document.getElementById("results").innerText = "Nessun voto";
+        return;
+      }
 
-  // Bottone reset
-  document.getElementById("resetBtn").addEventListener("click", () => {
-    if (confirm("Sei sicuro di voler resettare tutti i voti?")) {
-      db.ref("voti").set({ senato: 0, camera: 0 })
-        .then(() => {
-          aggiornaRisultato({ senato: 0, camera: 0 });
-          alert("Voti resettati con successo!");
-        })
-        .catch(err => alert("Errore nel reset: " + err));
+      let sum = 0, count = 0;
+      Object.values(votes).forEach(v => {
+        sum += v;
+        count++;
+      });
+
+      document.getElementById("results").innerText =
+        `Voti totali: ${count} | Media: ${(sum/count).toFixed(2)}`;
+    });
+  }
+
+  function resetVotes() {
+    if (confirm("Sicuro di cancellare tutti i voti?")) {
+      db.ref("votes").remove();
+      alert("Voti cancellati");
     }
-  });
+  }
 </script>
 
 </body>
